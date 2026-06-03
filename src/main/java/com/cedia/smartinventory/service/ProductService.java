@@ -1,51 +1,71 @@
 package com.cedia.smartinventory.service;
 
+import com.cedia.smartinventory.dto.ProductRequestDTO;
+import com.cedia.smartinventory.dto.ProductResponseDTO;
+import com.cedia.smartinventory.exception.ResourceNotFoundException;
 import com.cedia.smartinventory.model.Product;
 import com.cedia.smartinventory.repository.ProductRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
-@Transactional
+@RequiredArgsConstructor
 public class ProductService {
 
     private final ProductRepository productRepository;
 
-    public ProductService(ProductRepository productRepository) {
-        this.productRepository = productRepository;
+    public ProductResponseDTO crearProducto(ProductRequestDTO request) {
+        Product product = Product.builder()
+                .name(request.getName())
+                .description(request.getDescription())
+                .price(request.getPrice())
+                .stock(request.getStock())
+                .active(true)
+                .build();
+        return toResponseDTO(productRepository.save(product));
     }
 
-    public List<Product> findAll() {
-        return productRepository.findAll();
+    public List<ProductResponseDTO> listarProductos() {
+        return productRepository.findAll()
+                .stream()
+                .map(this::toResponseDTO)
+                .collect(Collectors.toList());
     }
 
-    public Optional<Product> findById(Long id) {
-        return productRepository.findById(id);
+    public ProductResponseDTO obtenerProducto(Long id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado con id: " + id));
+        return toResponseDTO(product);
     }
 
-    public Product create(Product product) {
-        return productRepository.save(product);
+    public ProductResponseDTO actualizarProducto(Long id, ProductRequestDTO request) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado con id: " + id));
+        product.setName(request.getName());
+        product.setDescription(request.getDescription());
+        product.setPrice(request.getPrice());
+        product.setStock(request.getStock());
+        return toResponseDTO(productRepository.save(product));
     }
 
-    public Optional<Product> update(Long id, Product updated) {
-        return productRepository.findById(id).map(existing -> {
-            existing.setName(updated.getName());
-            existing.setDescription(updated.getDescription());
-            existing.setPrice(updated.getPrice());
-            existing.setStock(updated.getStock());
-            existing.setActive(updated.getActive());
-            return productRepository.save(existing);
-        });
-    }
-
-    public boolean delete(Long id) {
-        if (productRepository.existsById(id)) {
-            productRepository.deleteById(id);
-            return true;
+    public void eliminarProducto(Long id) {
+        if (!productRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Producto no encontrado con id: " + id);
         }
-        return false;
+        productRepository.deleteById(id);
+    }
+
+    private ProductResponseDTO toResponseDTO(Product product) {
+        return ProductResponseDTO.builder()
+                .id(product.getId())
+                .name(product.getName())
+                .description(product.getDescription())
+                .price(product.getPrice())
+                .stock(product.getStock())
+                .active(product.getActive())
+                .build();
     }
 }

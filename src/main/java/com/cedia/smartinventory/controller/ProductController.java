@@ -1,8 +1,10 @@
 package com.cedia.smartinventory.controller;
 
-import com.cedia.smartinventory.model.Product;
+import com.cedia.smartinventory.dto.ProductRequestDTO;
+import com.cedia.smartinventory.dto.ProductResponseDTO;
 import com.cedia.smartinventory.service.ProductService;
-import org.springframework.http.HttpStatus;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -10,52 +12,37 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/products")
+@RequiredArgsConstructor
 public class ProductController {
 
     private final ProductService productService;
 
-    public ProductController(ProductService productService) {
-        this.productService = productService;
-    }
-
-    // GET /api/products
-    @GetMapping
-    public ResponseEntity<List<Product>> listar() {
-        return ResponseEntity.ok(productService.findAll());
-    }
-
-    // GET /api/products/{id}
-    @GetMapping("/{id}")
-    public ResponseEntity<Product> buscarPorId(@PathVariable Long id) {
-        return productService.findById(id)
-            .map(ResponseEntity::ok)
-            .orElse(ResponseEntity.notFound().build());
-    }
-
-    // POST /api/products
     @PostMapping
-    public ResponseEntity<Product> crear(@RequestBody Product product) {
-        return ResponseEntity
-            .status(HttpStatus.CREATED)
-            .body(productService.create(product));
+    public ResponseEntity<ProductResponseDTO> crearProducto(
+            @Valid @RequestBody ProductRequestDTO request) {
+        return ResponseEntity.status(201).body(productService.crearProducto(request));
     }
 
-    // PUT /api/products/{id}
+    @GetMapping
+    public ResponseEntity<List<ProductResponseDTO>> listarProductos() {
+        return ResponseEntity.ok(productService.listarProductos());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ProductResponseDTO> obtenerProducto(@PathVariable Long id) {
+        return ResponseEntity.ok(productService.obtenerProducto(id));
+    }
+
     @PutMapping("/{id}")
-    public ResponseEntity<Product> actualizar(
+    public ResponseEntity<ProductResponseDTO> actualizarProducto(
             @PathVariable Long id,
-            @RequestBody Product product) {
-        return productService.update(id, product)
-            .map(ResponseEntity::ok)
-            .orElse(ResponseEntity.notFound().build());
+            @Valid @RequestBody ProductRequestDTO request) {
+        return ResponseEntity.ok(productService.actualizarProducto(id, request));
     }
 
-    // DELETE /api/products/{id}
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
-        if (productService.delete(id)) {
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.notFound().build();
+    public ResponseEntity<Void> eliminarProducto(@PathVariable Long id) {
+        productService.eliminarProducto(id);
+        return ResponseEntity.noContent().build();
     }
 }
