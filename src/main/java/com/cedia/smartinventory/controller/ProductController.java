@@ -1,0 +1,42 @@
+package com.cedia.smartinventory.controller;
+
+import com.cedia.smartinventory.model.Product;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/products")
+public class ProductController {
+
+    // Datos en memoria — temporal, solo para esta sesión
+    private final List<Product> products = List.of(
+        Product.builder().id(1L).name("Laptop")
+            .description("Laptop de alto rendimiento")
+            .price(1200.0).stock(10).active(true).build(),
+        Product.builder().id(2L).name("Mouse")
+            .description("Mouse inalambrico")
+            .price(25.5).stock(50).active(true).build(),
+        Product.builder().id(3L).name("Teclado")
+            .description("Teclado mecanico")
+            .price(45.0).stock(30).active(true).build()
+    );
+
+    // GET /api/products
+    @GetMapping
+    public List<Product> listar() {
+        return products;
+    }
+
+    // GET /api/products/{id}
+    @GetMapping("/{id}")
+    public Product buscarPorId(@PathVariable Long id) {
+        return products.stream()
+            .filter(p -> p.getId().equals(id))
+            .findFirst()
+            .orElse(null);
+    }
+}
