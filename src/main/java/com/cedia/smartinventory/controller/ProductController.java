@@ -3,45 +3,80 @@ package com.cedia.smartinventory.controller;
 import com.cedia.smartinventory.dto.ProductRequestDTO;
 import com.cedia.smartinventory.dto.ProductResponseDTO;
 import com.cedia.smartinventory.service.ProductService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/products")
 @RequiredArgsConstructor
+@Tag(name = "Productos", description = "Gestión del catálogo de productos de SmartInventory")
 public class ProductController {
 
     private final ProductService productService;
 
+    @Operation(summary = "Listar productos", description = "Retorna todos los productos con paginación")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Lista obtenida correctamente")
+    })
+    @GetMapping
+    public ResponseEntity<Page<ProductResponseDTO>> listarProductos(
+            @ParameterObject Pageable pageable) {
+        return ResponseEntity.ok(productService.listarProductos(pageable));
+    }
+
+    @Operation(summary = "Obtener producto por ID")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Producto encontrado"),
+        @ApiResponse(responseCode = "404", description = "Producto no encontrado")
+    })
+    @GetMapping("/{id}")
+    public ResponseEntity<ProductResponseDTO> obtenerProducto(
+            @Parameter(description = "ID del producto") @PathVariable Long id) {
+        return ResponseEntity.ok(productService.obtenerProducto(id));
+    }
+
+    @Operation(summary = "Crear producto")
+    @ApiResponses({
+        @ApiResponse(responseCode = "201", description = "Producto creado correctamente"),
+        @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos")
+    })
     @PostMapping
     public ResponseEntity<ProductResponseDTO> crearProducto(
             @Valid @RequestBody ProductRequestDTO request) {
         return ResponseEntity.status(201).body(productService.crearProducto(request));
     }
 
-    @GetMapping
-    public ResponseEntity<List<ProductResponseDTO>> listarProductos() {
-        return ResponseEntity.ok(productService.listarProductos());
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<ProductResponseDTO> obtenerProducto(@PathVariable Long id) {
-        return ResponseEntity.ok(productService.obtenerProducto(id));
-    }
-
+    @Operation(summary = "Actualizar producto")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Producto actualizado"),
+        @ApiResponse(responseCode = "404", description = "Producto no encontrado"),
+        @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos")
+    })
     @PutMapping("/{id}")
     public ResponseEntity<ProductResponseDTO> actualizarProducto(
-            @PathVariable Long id,
+            @Parameter(description = "ID del producto") @PathVariable Long id,
             @Valid @RequestBody ProductRequestDTO request) {
         return ResponseEntity.ok(productService.actualizarProducto(id, request));
     }
 
+    @Operation(summary = "Eliminar producto")
+    @ApiResponses({
+        @ApiResponse(responseCode = "204", description = "Producto eliminado correctamente"),
+        @ApiResponse(responseCode = "404", description = "Producto no encontrado")
+    })
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminarProducto(@PathVariable Long id) {
+    public ResponseEntity<Void> eliminarProducto(
+            @Parameter(description = "ID del producto") @PathVariable Long id) {
         productService.eliminarProducto(id);
         return ResponseEntity.noContent().build();
     }

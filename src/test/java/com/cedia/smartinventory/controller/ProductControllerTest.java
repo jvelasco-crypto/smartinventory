@@ -16,6 +16,9 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -40,12 +43,12 @@ class ProductControllerTest {
     // TEST 2 — Listar productos sin autenticación → 200
     @Test
     void listarProductos_sinAuth_debeRetornar200() throws Exception {
-        when(productService.listarProductos()).thenReturn(List.of());
+        when(productService.listarProductos(any(Pageable.class))).thenReturn(Page.empty());
 
         mockMvc.perform(get("/api/products"))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$").isArray());
+            .andExpect(jsonPath("$.content").isArray());
     }
 
     // TEST 3 — Crear producto con datos válidos → 201
